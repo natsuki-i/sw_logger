@@ -1,0 +1,11 @@
+[package]
+name = "sw_logger_server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = { version = "0.6.20", features=["ws"] }
+futures = "0.3"
+tokio = { version = "1", features=["full"] }
+tower-http = { version = "0.4.4", features=["fs"] }
+pretty_env_logger = "0.5"
