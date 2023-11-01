@@ -3,6 +3,7 @@ use axum::{
         ws::{Message, WebSocket, WebSocketUpgrade},
         Query, State,
     },
+    http::{Request, StatusCode},
     response::IntoResponse,
     routing::get,
     Router,
@@ -14,19 +15,30 @@ use tokio_stream::wrappers::BroadcastStream;
 
 #[tokio::main]
 async fn main() {
-    pretty_env_logger::init();
+    pretty_env_logger::formatted_builder()
+        .filter_level(log::LevelFilter::Info)
+        .init();
 
     let state = Arc::new(AppState::new());
     let app = Router::new()
         .route("/socket", get(websocket_handler))
         .route("/push", get(push_handler))
         .with_state(state)
-        .nest_service("/", tower_http::services::ServeDir::new("public"));
+        .nest_service("/", tower_http::services::ServeDir::new("public"))
+        .layer(axum::middleware::from_fn(access_log));
 
     axum::Server::bind(&"127.0.0.1:8080".parse().unwrap())
         .serve(app.into_make_service())
         .await
         .unwrap();
+}
+
+async fn access_log<B>(
+    req: Request<B>,
+    next: axum::middleware::Next<B>,
+) -> Result<axum::response::Response, StatusCode> {
+    log::info!("{} {}", req.method(), req.uri());
+    Ok(next.run(req).await)
 }
 
 struct AppState {
