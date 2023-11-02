@@ -1,15 +1,14 @@
-use egui::ahash::HashMap;
-use std::collections::VecDeque;
+use std::collections::{BTreeMap, VecDeque};
 
 #[derive(Debug, PartialEq)]
 pub struct Values {
-    values: HashMap<String, VecDeque<f32>>,
+    values: BTreeMap<String, VecDeque<f32>>,
     max_len: usize,
 }
 
 impl Default for Values {
     fn default() -> Self {
-        Self::with_capacity(600)
+        Self::with_capacity(3600)
     }
 }
 
@@ -34,6 +33,10 @@ impl Values {
 
     pub fn keys(&self) -> impl Iterator<Item = &String> {
         self.values.keys()
+    }
+
+    pub fn iter_for_key(&self, key: &str) -> Option<impl Iterator<Item = &f32> + ExactSizeIterator> {
+        self.values.get(key).map(|v| v.iter())
     }
 
     pub fn get_last_value_for_key(&self, key: &str) -> Option<f32> {

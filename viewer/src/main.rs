@@ -1,5 +1,8 @@
-mod values;
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 mod app;
+mod graph;
+mod values;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
@@ -26,7 +29,11 @@ fn main() {
 
     wasm_bindgen_futures::spawn_local(async {
         eframe::WebRunner::new()
-            .start("canvas", web_options, Box::new(|cc| Box::new(app::App::new(cc))))
+            .start(
+                "canvas",
+                web_options,
+                Box::new(|cc| Box::new(app::App::new(cc))),
+            )
             .await
             .expect("failed to start")
     });

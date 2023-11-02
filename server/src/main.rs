@@ -9,7 +9,7 @@ use axum::{
     Router,
 };
 use futures::{prelude::*, SinkExt};
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
 
@@ -53,7 +53,7 @@ impl AppState {
 }
 
 async fn push_handler(
-    Query(query): Query<HashMap<String, f64>>,
+    Query(query): Query<Vec<(String, f64)>>,
     State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
     match serde_json::to_string(&query) {
