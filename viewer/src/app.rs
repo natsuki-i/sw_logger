@@ -1,4 +1,7 @@
-use crate::{graph::LineGraph, values::Values};
+use crate::{
+    graph::{GraphWindow, LineGraph, XYGraph},
+    values::Values,
+};
 use ewebsock::{WsMessage, WsReceiver, WsSender};
 
 pub struct App {
@@ -6,7 +9,7 @@ pub struct App {
     server: String,
     ws: Option<(WsSender, WsReceiver)>,
     values: Values,
-    graphs: Vec<(LineGraph, bool)>,
+    graphs: Vec<(Box<dyn GraphWindow>, bool)>,
 }
 
 impl App {
@@ -65,6 +68,14 @@ impl eframe::App for App {
                     });
                 }
                 egui::widgets::reset_button(ui, &mut self.values);
+                ui.separator();
+                if ui.button("XY Graph").clicked() {
+                    self.graphs.push((
+                        Box::new(XYGraph::new(format!("xy_graph_{}", self.id))),
+                        true,
+                    ));
+                    self.id += 1;
+                }
             });
         });
 
@@ -129,7 +140,7 @@ impl App {
                         row.col(|ui| {
                             if ui.button("open graph").clicked() {
                                 self.graphs
-                                    .push((LineGraph::new(self.id, k.to_owned()), true));
+                                    .push((Box::new(LineGraph::new(self.id, k.to_owned())), true));
                                 self.id += 1;
                             }
                         });

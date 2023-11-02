@@ -31,11 +31,18 @@ impl Values {
         }
     }
 
+    pub fn contains_key(&self, key: &str) -> bool {
+        self.values.contains_key(key)
+    }
+
     pub fn keys(&self) -> impl Iterator<Item = &String> {
         self.values.keys()
     }
 
-    pub fn iter_for_key(&self, key: &str) -> Option<impl Iterator<Item = &f32> + ExactSizeIterator> {
+    pub fn iter_for_key(
+        &self,
+        key: &str,
+    ) -> Option<impl Iterator<Item = &f32> + ExactSizeIterator + DoubleEndedIterator> {
         self.values.get(key).map(|v| v.iter())
     }
 
