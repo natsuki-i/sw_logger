@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<microprocessor name="Metrics" description="No description set." width="2" length="1" id_counter="60" id_counter_node="2">
+	<nodes>
+		<n id="1" component_id="2">
+			<node label="Input" mode="1" type="5"/>
+		</n>
+		<n id="2" component_id="4">
+			<node label="Enable" mode="1">
+				<position x="1"/>
+			</node>
+		</n>
+	</nodes>
+	<group>
+		<data>
+			<inputs/>
+			<outputs/>
+		</data>
+		<components>
+			<c type="56">
+				<object id="3" script='-- Author: natsuki_i
+-- GitHub: https://github.com/natsuki-i
+-- Workshop: &lt;WorkshopLink&gt;
+--
+-- Developed &amp; Minimized using LifeBoatAPI - Stormworks Lua plugin for VSCode
+-- https://code.visualstudio.com/download (search "Stormworks Lua with LifeboatAPI" extension)
+--      By Nameous Changey
+-- Minimized Size: 443 (771 with comment) chars
+
+e=input
+g=string.format
+c={}for _=1,32,1 do
+c[_]=property.getText(g("label_%d",_));
+end
+d={};
+a=60;
+function onTick()if not e.getBool(1)then
+return;
+end
+for _=1,32,1 do
+if c[_]~="" and c[_]~=nil then
+table.insert(d,{c[_],e.getNumber(_)});
+end
+end
+a=a-1;
+if a&lt;=0 then
+local b="/push?"
+for h,f in ipairs(d)do
+if h~=1 then
+b=b.."&amp;";
+end
+b=b..g("%s=%f",f[1],f[2]);
+end
+d={};
+async.httpGet(8080,b);
+a=60;
+end
+end
+function httpReply(i,j,k)a=0;
+end
+'>
+					<pos x="3" y="-0.25"/>
+					<in1 component_id="5"/>
+				</object>
+			</c>
+			<c type="41">
+				<object id="5" count="1">
+					<pos x="1.5" y="-0.25"/>
+					<inc component_id="2"/>
+					<in1 component_id="4"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="9" n="label_1">
+					<pos x="-6.75"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="10" n="label_2">
+					<pos x="-6.75" y="-0.75"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="12" n="label_3">
+					<pos x="-6.75" y="-1.5"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="14" n="label_4">
+					<pos x="-6.75" y="-2.25"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="15" n="label_5" v="x1">
+					<pos x="-6.75" y="-3"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="16" n="label_6" v="y1">
+					<pos x="-6.75" y="-3.75"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="17" n="label_7" v="z1">
+					<pos x="-6.75" y="-4.5"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="18" n="label_8" v="x2">
+					<pos x="-6.75" y="-5.25"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="19" n="label_9" v="y2">
+					<pos x="-5.25"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="21" n="label_10" v="z2">
+					<pos x="-5.25" y="-0.75"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="23" n="label_11">
+					<pos x="-5.25" y="-1.5"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="25" n="label_12">
+					<pos x="-5.25" y="-2.25"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="26" n="label_13">
+					<pos x="-5.25" y="-3"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="28" n="label_14">
+					<pos x="-5.25" y="-3.75"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="30" n="label_15">
+					<pos x="-5.25" y="-4.5"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="32" n="label_16">
+					<pos x="-5.25" y="-5.25"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="33" n="label_17">
+					<pos x="-3.75"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="35" n="label_18">
+					<pos x="-3.75" y="-0.75"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="37" n="label_19">
+					<pos x="-3.75" y="-1.5"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="39" n="label_20">
+					<pos x="-3.75" y="-2.25"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="40" n="label_21">
+					<pos x="-3.75" y="-3"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="42" n="label_22">
+					<pos x="-3.75" y="-3.75"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="44" n="label_23">
+					<pos x="-3.75" y="-4.5"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="46" n="label_24">
+					<pos x="-3.75" y="-5.25"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="47" n="label_25">
+					<pos x="-2.25"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="49" n="label_26">
+					<pos x="-2.25" y="-0.75"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="51" n="label_27">
+					<pos x="-2.25" y="-1.5"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="53" n="label_28">
+					<pos x="-2.25" y="-2.25"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="54" n="label_29">
+					<pos x="-2.25" y="-3"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="56" n="label_30">
+					<pos x="-2.25" y="-3.75"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="58" n="label_31">
+					<pos x="-2.25" y="-4.5"/>
+				</object>
+			</c>
+			<c type="58">
+				<object id="60" n="label_32">
+					<pos x="-2.25" y="-5.25"/>
+				</object>
+			</c>
+		</components>
+		<components_bridge>
+			<c type="4">
+				<object id="2"/>
+			</c>
+			<c>
+				<object id="4">
+					<pos y="-0.5"/>
+				</object>
+			</c>
+		</components_bridge>
+		<groups/>
+		<component_states>
+			<c0 id="3" script='-- Author: natsuki_i
+-- GitHub: https://github.com/natsuki-i
+-- Workshop: &lt;WorkshopLink&gt;
+--
+-- Developed &amp; Minimized using LifeBoatAPI - Stormworks Lua plugin for VSCode
+-- https://code.visualstudio.com/download (search "Stormworks Lua with LifeboatAPI" extension)
+--      By Nameous Changey
+-- Minimized Size: 443 (771 with comment) chars
+
+e=input
+g=string.format
+c={}for _=1,32,1 do
+c[_]=property.getText(g("label_%d",_));
+end
+d={};
+a=60;
+function onTick()if not e.getBool(1)then
+return;
+end
+for _=1,32,1 do
+if c[_]~="" and c[_]~=nil then
+table.insert(d,{c[_],e.getNumber(_)});
+end
+end
+a=a-1;
+if a&lt;=0 then
+local b="/push?"
+for h,f in ipairs(d)do
+if h~=1 then
+b=b.."&amp;";
+end
+b=b..g("%s=%f",f[1],f[2]);
+end
+d={};
+async.httpGet(8080,b);
+a=60;
+end
+end
+function httpReply(i,j,k)a=0;
+end
+'>
+				<pos x="3" y="-0.25"/>
+				<in1 component_id="5"/>
+			</c0>
+			<c1 id="5" count="1">
+				<pos x="1.5" y="-0.25"/>
+				<inc component_id="2"/>
+				<in1 component_id="4"/>
+			</c1>
+			<c2 id="9" n="label_1">
+				<pos x="-6.75"/>
+			</c2>
+			<c3 id="10" n="label_2">
+				<pos x="-6.75" y="-0.75"/>
+			</c3>
+			<c4 id="12" n="label_3">
+				<pos x="-6.75" y="-1.5"/>
+			</c4>
+			<c5 id="14" n="label_4">
+				<pos x="-6.75" y="-2.25"/>
+			</c5>
+			<c6 id="15" n="label_5" v="x1">
+				<pos x="-6.75" y="-3"/>
+			</c6>
+			<c7 id="16" n="label_6" v="y1">
+				<pos x="-6.75" y="-3.75"/>
+			</c7>
+			<c8 id="17" n="label_7" v="z1">
+				<pos x="-6.75" y="-4.5"/>
+			</c8>
+			<c9 id="18" n="label_8" v="x2">
+				<pos x="-6.75" y="-5.25"/>
+			</c9>
+			<c10 id="19" n="label_9" v="y2">
+				<pos x="-5.25"/>
+			</c10>
+			<c11 id="21" n="label_10" v="z2">
+				<pos x="-5.25" y="-0.75"/>
+			</c11>
+			<c12 id="23" n="label_11">
+				<pos x="-5.25" y="-1.5"/>
+			</c12>
+			<c13 id="25" n="label_12">
+				<pos x="-5.25" y="-2.25"/>
+			</c13>
+			<c14 id="26" n="label_13">
+				<pos x="-5.25" y="-3"/>
+			</c14>
+			<c15 id="28" n="label_14">
+				<pos x="-5.25" y="-3.75"/>
+			</c15>
+			<c16 id="30" n="label_15">
+				<pos x="-5.25" y="-4.5"/>
+			</c16>
+			<c17 id="32" n="label_16">
+				<pos x="-5.25" y="-5.25"/>
+			</c17>
+			<c18 id="33" n="label_17">
+				<pos x="-3.75"/>
+			</c18>
+			<c19 id="35" n="label_18">
+				<pos x="-3.75" y="-0.75"/>
+			</c19>
+			<c20 id="37" n="label_19">
+				<pos x="-3.75" y="-1.5"/>
+			</c20>
+			<c21 id="39" n="label_20">
+				<pos x="-3.75" y="-2.25"/>
+			</c21>
+			<c22 id="40" n="label_21">
+				<pos x="-3.75" y="-3"/>
+			</c22>
+			<c23 id="42" n="label_22">
+				<pos x="-3.75" y="-3.75"/>
+			</c23>
+			<c24 id="44" n="label_23">
+				<pos x="-3.75" y="-4.5"/>
+			</c24>
+			<c25 id="46" n="label_24">
+				<pos x="-3.75" y="-5.25"/>
+			</c25>
+			<c26 id="47" n="label_25">
+				<pos x="-2.25"/>
+			</c26>
+			<c27 id="49" n="label_26">
+				<pos x="-2.25" y="-0.75"/>
+			</c27>
+			<c28 id="51" n="label_27">
+				<pos x="-2.25" y="-1.5"/>
+			</c28>
+			<c29 id="53" n="label_28">
+				<pos x="-2.25" y="-2.25"/>
+			</c29>
+			<c30 id="54" n="label_29">
+				<pos x="-2.25" y="-3"/>
+			</c30>
+			<c31 id="56" n="label_30">
+				<pos x="-2.25" y="-3.75"/>
+			</c31>
+			<c32 id="58" n="label_31">
+				<pos x="-2.25" y="-4.5"/>
+			</c32>
+			<c33 id="60" n="label_32">
+				<pos x="-2.25" y="-5.25"/>
+			</c33>
+		</component_states>
+		<component_bridge_states>
+			<c0 id="2"/>
+			<c1 id="4">
+				<pos y="-0.5"/>
+			</c1>
+		</component_bridge_states>
+		<group_states/>
+	</group>
+</microprocessor>
+
