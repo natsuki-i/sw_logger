@@ -1,11 +1,7 @@
-use crate::values::Values;
+use crate::{app::Window, values::Values};
 use egui::{vec2, Context, Id, Ui};
 use egui_plot::{Legend, Line, Plot, PlotPoints};
 use std::hash::Hash;
-
-pub trait GraphWindow {
-    fn show(&mut self, ctx: &Context, open: &mut bool, values: &Values);
-}
 
 pub struct LineGraph {
     id: Id,
@@ -13,7 +9,7 @@ pub struct LineGraph {
     keys: Vec<String>,
 }
 
-impl GraphWindow for LineGraph {
+impl Window for LineGraph {
     fn show(&mut self, ctx: &Context, open: &mut bool, values: &Values) {
         egui::Window::new(&self.title)
             .id(self.id)
@@ -75,7 +71,7 @@ pub struct XYGraph {
     keys: Vec<(String, String)>,
 }
 
-impl GraphWindow for XYGraph {
+impl Window for XYGraph {
     fn show(&mut self, ctx: &Context, open: &mut bool, values: &Values) {
         egui::Window::new("XY Graph")
             .id(self.id)

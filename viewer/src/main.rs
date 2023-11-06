@@ -2,6 +2,7 @@
 
 mod app;
 mod graph;
+mod table;
 mod values;
 
 #[cfg(not(target_arch = "wasm32"))]

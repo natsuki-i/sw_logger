@@ -1,15 +1,20 @@
 use crate::{
-    graph::{GraphWindow, LineGraph, XYGraph},
+    graph::{LineGraph, XYGraph},
+    table::TableWindow,
     values::Values,
 };
 use ewebsock::{WsMessage, WsReceiver, WsSender};
+
+pub trait Window {
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool, values: &Values);
+}
 
 pub struct App {
     id: usize,
     server: String,
     ws: Option<(WsSender, WsReceiver)>,
     values: Values,
-    graphs: Vec<(Box<dyn GraphWindow>, bool)>,
+    windows: Vec<(Box<dyn Window>, bool)>,
 }
 
 impl App {
@@ -19,7 +24,7 @@ impl App {
             server: "ws://127.0.0.1:8080/socket".into(),
             ws: None,
             values: Default::default(),
-            graphs: vec![],
+            windows: vec![],
         }
     }
 }
@@ -70,7 +75,7 @@ impl eframe::App for App {
                 egui::widgets::reset_button(ui, &mut self.values);
                 ui.separator();
                 if ui.button("XY Graph").clicked() {
-                    self.graphs.push((
+                    self.windows.push((
                         Box::new(XYGraph::new(format!("xy_graph_{}", self.id))),
                         true,
                     ));
@@ -98,10 +103,10 @@ impl eframe::App for App {
             self.table(ui);
         });
 
-        for graph in &mut self.graphs {
+        for graph in &mut self.windows {
             graph.0.show(ctx, &mut graph.1, &self.values);
         }
-        self.graphs.retain(|g| g.1);
+        self.windows.retain(|g| g.1);
     }
 }
 
@@ -139,8 +144,15 @@ impl App {
                         });
                         row.col(|ui| {
                             if ui.button("open graph").clicked() {
-                                self.graphs
+                                self.windows
                                     .push((Box::new(LineGraph::new(self.id, k.to_owned())), true));
+                                self.id += 1;
+                            }
+                            if ui.button("open table").clicked() {
+                                self.windows.push((
+                                    Box::new(TableWindow::new(self.id, k.to_owned())),
+                                    true,
+                                ));
                                 self.id += 1;
                             }
                         });
