@@ -3,7 +3,7 @@ use crate::{
     table::TableWindow,
     values::Values,
 };
-use egui::ahash::HashMap;
+use egui::{ahash::HashMap, OpenUrl};
 use ewebsock::{WsMessage, WsReceiver, WsSender};
 
 pub trait Window {
@@ -65,14 +65,23 @@ impl eframe::App for App {
             egui::menu::bar(ui, |ui| {
                 egui::widgets::global_dark_light_mode_switch(ui);
                 ui.separator();
-                #[cfg(not(target_arch = "wasm32"))]
-                {
-                    ui.menu_button("File", |ui| {
+                ui.menu_button("File", |ui| {
+                    if ui.button("Download JSON").clicked() {
+                        //let uri = self.server;
+                        if let Ok(mut url) = url::Url::parse(&self.server) {
+                            if url.set_scheme("http").is_ok() {
+                                url.set_path("/download.json");
+                                ctx.open_url(OpenUrl::new_tab(url.to_string()));
+                            }
+                        }
+                    }
+                    #[cfg(not(target_arch = "wasm32"))]
+                    {
                         if ui.button("Quit").clicked() {
                             _frame.close();
                         }
-                    });
-                }
+                    }
+                });
                 egui::widgets::reset_button(ui, &mut self.values);
                 ui.separator();
                 if ui.button("XY Graph").clicked() {

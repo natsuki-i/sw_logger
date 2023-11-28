@@ -1,3 +1,5 @@
+mod values;
+
 use axum::{
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
@@ -6,11 +8,11 @@ use axum::{
     http::{Request, StatusCode},
     response::IntoResponse,
     routing::get,
-    Router,
+    Json, Router,
 };
 use futures::{prelude::*, SinkExt};
-use std::{collections::HashMap, sync::Arc};
-use tokio::sync::broadcast;
+use std::{collections::HashMap, ops::Deref, sync::Arc};
+use tokio::sync::{broadcast, Mutex};
 use tokio_stream::wrappers::BroadcastStream;
 
 #[tokio::main]
@@ -24,6 +26,7 @@ async fn main() {
         .route("/socket", get(websocket_handler))
         .route("/push", get(push_handler))
         .route("/p", get(push_handler2))
+        .route("/download.json", get(download_json))
         .with_state(state)
         .nest_service("/", tower_http::services::ServeDir::new("public"))
         .layer(axum::middleware::from_fn(access_log));
@@ -44,21 +47,27 @@ async fn access_log<B>(
 
 struct AppState {
     tx: broadcast::Sender<Message>,
+    values: Mutex<values::Values>,
 }
 
 impl AppState {
     pub fn new() -> AppState {
         let (tx, _) = broadcast::channel(100);
-        AppState { tx }
+        AppState {
+            tx,
+            values: Default::default(),
+        }
     }
 }
 
 async fn push_handler(
-    Query(query): Query<Vec<(String, f64)>>,
+    Query(query): Query<Vec<(String, f32)>>,
     State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
-    let mut map = HashMap::<String, Vec<f64>>::new();
+    let mut map = HashMap::<String, Vec<f32>>::new();
+    let mut values = state.values.lock().await;
     for (k, v) in query {
+        values.push(k.clone(), &[v]);
         map.entry(k).or_default().push(v);
     }
     match serde_json::to_string(&map) {
@@ -83,6 +92,10 @@ async fn push_handler2(
         Ok(v) => v,
         Err(e) => return format!("failed to decode message pack: {}", e),
     };
+    let mut values = state.values.lock().await;
+    for (k, v) in &v {
+        values.push(k.clone(), v);
+    }
     match serde_json::to_string(&v) {
         Ok(s) => {
             state.tx.send(Message::Text(s)).ok();
@@ -90,6 +103,12 @@ async fn push_handler2(
         }
         Err(e) => format!("failed to encode json: {}", e),
     }
+}
+
+async fn download_json(State(state): State<Arc<AppState>>) -> Json<serde_json::Value> {
+    let values = state.values.lock().await;
+    let values = serde_json::to_value(values.deref()).unwrap();
+    Json(values)
 }
 
 async fn websocket_handler(
