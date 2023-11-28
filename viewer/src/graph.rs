@@ -1,5 +1,5 @@
 use crate::{app::Window, values::Values};
-use egui::{vec2, Context, Id, Ui};
+use egui::{vec2, Context, Id, ScrollArea, Ui};
 use egui_plot::{Legend, Line, Plot, PlotPoints};
 use std::hash::Hash;
 
@@ -31,18 +31,22 @@ impl LineGraph {
     }
 
     pub fn ui(&mut self, ui: &mut Ui, values: &Values) {
-        ui.horizontal(|ui| {
-            for key in values.keys() {
-                if ui.selectable_label(self.keys.contains(key), key).clicked() {
-                    if let Some(index) = self.keys.iter().position(|k| k == key) {
-                        self.keys.remove(index);
-                    } else {
-                        self.keys.push(key.to_owned());
+        ScrollArea::horizontal()
+            .id_source(self.id.with("header"))
+            .show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    for key in values.keys() {
+                        if ui.selectable_label(self.keys.contains(key), key).clicked() {
+                            if let Some(index) = self.keys.iter().position(|k| k == key) {
+                                self.keys.remove(index);
+                            } else {
+                                self.keys.push(key.to_owned());
+                            }
+                            self.title = self.keys.join(", ");
+                        }
                     }
-                    self.title = self.keys.join(", ");
-                };
-            }
-        });
+                });
+            });
         ui.separator();
         Plot::new(self.id.with("plot"))
             .legend(Legend::default())
@@ -112,8 +116,7 @@ impl XYGraph {
                 && values.contains_key(&self.selector.0)
                 && values.contains_key(&self.selector.1)
             {
-                self.keys
-                    .push(std::mem::replace(&mut self.selector, Default::default()));
+                self.keys.push(std::mem::take(&mut self.selector));
             }
         });
         ui.separator();
@@ -141,7 +144,7 @@ impl XYGraph {
             .show(ui, |ui| {
                 for (x_key, y_key) in &self.keys {
                     if let (Some(x_iter), Some(y_iter)) =
-                        (values.iter_for_key(&x_key), values.iter_for_key(&y_key))
+                        (values.iter_for_key(x_key), values.iter_for_key(y_key))
                     {
                         ui.line(
                             Line::new(PlotPoints::from_iter(
