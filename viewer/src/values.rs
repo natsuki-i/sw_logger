@@ -20,15 +20,15 @@ impl Values {
         }
     }
 
-    pub fn push(&mut self, key: String, value: f32) {
+    pub fn push(&mut self, key: String, values: Vec<f32>) {
         let v = self
             .values
             .entry(key)
-            .or_insert_with(|| VecDeque::with_capacity(self.max_len + 1));
-        v.push_back(value);
-        while v.len() > self.max_len {
-            v.pop_front();
+            .or_insert_with(|| VecDeque::with_capacity(self.max_len));
+        if v.len() + values.len() > self.max_len {
+            v.drain(0..(v.len() + values.len() - self.max_len));
         }
+        v.extend(values);
     }
 
     pub fn contains_key(&self, key: &str) -> bool {

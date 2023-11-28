@@ -3,6 +3,7 @@ use crate::{
     table::TableWindow,
     values::Values,
 };
+use egui::ahash::HashMap;
 use ewebsock::{WsMessage, WsReceiver, WsSender};
 
 pub trait Window {
@@ -36,7 +37,7 @@ impl eframe::App for App {
                 match e {
                     ewebsock::WsEvent::Opened => {}
                     ewebsock::WsEvent::Message(WsMessage::Text(m)) => {
-                        match serde_json::from_str::<Vec<(String, f32)>>(&m) {
+                        match serde_json::from_str::<HashMap<String, Vec<f32>>>(&m) {
                             Ok(v) => {
                                 for (k, v) in v {
                                     self.values.push(k, v);

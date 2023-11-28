@@ -1,7 +1,7 @@
 use axum::{
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
-        Query, State,
+        Query, RawQuery, State,
     },
     http::{Request, StatusCode},
     response::IntoResponse,
@@ -9,7 +9,7 @@ use axum::{
     Router,
 };
 use futures::{prelude::*, SinkExt};
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
 
@@ -23,6 +23,7 @@ async fn main() {
     let app = Router::new()
         .route("/socket", get(websocket_handler))
         .route("/push", get(push_handler))
+        .route("/p", get(push_handler2))
         .with_state(state)
         .nest_service("/", tower_http::services::ServeDir::new("public"))
         .layer(axum::middleware::from_fn(access_log));
@@ -56,7 +57,33 @@ async fn push_handler(
     Query(query): Query<Vec<(String, f64)>>,
     State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
-    match serde_json::to_string(&query) {
+    let mut map = HashMap::<String, Vec<f64>>::new();
+    for (k, v) in query {
+        map.entry(k).or_default().push(v);
+    }
+    match serde_json::to_string(&map) {
+        Ok(s) => {
+            state.tx.send(Message::Text(s)).ok();
+            "OK".into()
+        }
+        Err(e) => format!("failed to encode json: {}", e),
+    }
+}
+
+async fn push_handler2(
+    RawQuery(query): RawQuery,
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    use base64::prelude::*;
+    let v = match BASE64_URL_SAFE_NO_PAD.decode(query.unwrap_or_default()) {
+        Ok(v) => v,
+        Err(e) => return format!("failed to decode base64: {}", e),
+    };
+    let v = match rmp_serde::from_slice::<HashMap<String, Vec<f32>>>(&v) {
+        Ok(v) => v,
+        Err(e) => return format!("failed to decode message pack: {}", e),
+    };
+    match serde_json::to_string(&v) {
         Ok(s) => {
             state.tx.send(Message::Text(s)).ok();
             "OK".into()
