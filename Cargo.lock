@@ -2114,7 +2114,7 @@ checksum = "9e08d8363704e6c71fc928674353e6b7c23dcea9d82d7012c8faf2a3a025f8d0"
 
 [[package]]
 name = "sw_logger_server"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "axum",
  "base64",
@@ -2131,7 +2131,7 @@ dependencies = [
 
 [[package]]
 name = "sw_logger_viewer"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "eframe",
  "egui",
