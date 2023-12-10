@@ -20,9 +20,16 @@ pub struct App {
 
 impl App {
     pub fn new(_cc: &eframe::CreationContext) -> Self {
+        #[cfg(target_arch = "wasm32")]
+        let server = {
+            let location = &_cc.integration_info.web_info.location;
+            format!("ws://{}/socket", location.host)
+        };
+        #[cfg(not(target_arch = "wasm32"))]
+        let server = "ws://127.0.0.1:8080/socket".into();
         Self {
             id: 0,
-            server: "ws://127.0.0.1:8080/socket".into(),
+            server,
             ws: None,
             values: Default::default(),
             windows: vec![],
