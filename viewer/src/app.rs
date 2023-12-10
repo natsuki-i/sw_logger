@@ -82,6 +82,23 @@ impl eframe::App for App {
                         }
                     }
                 });
+                ui.menu_button("Settings", |ui| {
+                    ui.menu_button("Retention period", |ui| {
+                        for (label, len) in [
+                            ("10sec", 60 * 10),
+                            ("1min", 60 * 60),
+                            ("5min", 60 * 60 * 5),
+                            ("10min", 60 * 60 * 10),
+                            ("15min", 60 * 60 * 15),
+                            ("30min", 60 * 60 * 30),
+                        ] {
+                            if ui.radio(self.values.max_len() == len, label).clicked() {
+                                self.values.set_max_len(len);
+                                ui.close_menu();
+                            }
+                        }
+                    });
+                });
                 egui::widgets::reset_button(ui, &mut self.values);
                 ui.separator();
                 if ui.button("XY Graph").clicked() {

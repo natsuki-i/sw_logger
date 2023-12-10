@@ -20,6 +20,22 @@ impl Values {
         }
     }
 
+    pub fn max_len(&self) -> usize {
+        self.max_len
+    }
+
+    pub fn set_max_len(&mut self, max_len: usize) {
+        self.max_len = max_len;
+        for v in self.values.values_mut() {
+            if v.len() < max_len {
+                v.reserve(max_len - v.len());
+            }
+            if v.len() > max_len {
+                v.drain(0..(v.len() - max_len));
+            }
+        }
+    }
+
     pub fn push(&mut self, key: String, values: Vec<f32>) {
         let v = self
             .values
