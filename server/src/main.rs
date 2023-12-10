@@ -1,3 +1,4 @@
+mod args;
 mod values;
 
 use axum::{
@@ -10,8 +11,9 @@ use axum::{
     routing::get,
     Json, Router,
 };
+use clap::Parser;
 use futures::{prelude::*, SinkExt};
-use std::{collections::HashMap, ops::Deref, sync::Arc};
+use std::{collections::HashMap, net::SocketAddrV4, ops::Deref, sync::Arc};
 use tokio::sync::{broadcast, Mutex};
 use tokio_stream::wrappers::BroadcastStream;
 
@@ -20,6 +22,8 @@ async fn main() {
     pretty_env_logger::formatted_builder()
         .filter_level(log::LevelFilter::Info)
         .init();
+
+    let args = args::Args::parse();
 
     let state = Arc::new(AppState::new());
     let app = Router::new()
@@ -31,7 +35,7 @@ async fn main() {
         .nest_service("/", tower_http::services::ServeDir::new("public"))
         .layer(axum::middleware::from_fn(access_log));
 
-    axum::Server::bind(&"127.0.0.1:8080".parse().unwrap())
+    axum::Server::bind(&SocketAddrV4::new(args.ip, args.port).into())
         .serve(app.into_make_service())
         .await
         .unwrap();
