@@ -1,4 +1,9 @@
-use std::collections::{BTreeMap, VecDeque};
+use std::{
+    collections::{BTreeMap, VecDeque},
+    fs::File,
+    io::{BufWriter, Write},
+    path::Path,
+};
 
 #[derive(Debug, PartialEq)]
 pub struct Values {
@@ -72,5 +77,49 @@ impl Values {
             .as_ref()
             .and_then(|v| v.back())
             .cloned()
+    }
+
+    pub fn save_csv<'a, K>(&self, path: &Path, keys: K) -> Result<(), std::io::Error>
+    where
+        K: Iterator<Item = &'a String>,
+    {
+        let mut writer = BufWriter::new(File::create(path)?);
+        let mut values = Vec::with_capacity(self.values.len());
+        let mut first = true;
+        let mut max_len = 0;
+        for key in keys {
+            if let Some(v) = self.values_for_key(key) {
+                if first {
+                    first = false
+                } else {
+                    writer.write_all(",".as_bytes())?;
+                }
+                writer.write_all(key.as_bytes())?;
+                max_len = max_len.max(v.len());
+                values.push(v);
+            }
+        }
+        writer.write_all("\n".as_bytes())?;
+        for index in 0..max_len {
+            for (i, vec) in values.iter().enumerate() {
+                let offset = max_len - vec.len();
+                if offset > index {
+                    writer.write_all(",".as_bytes())?;
+                    continue;
+                }
+                if let Some(v) = vec.get(index - offset) {
+                    if i == 0 {
+                        writer.write_fmt(format_args!("{}", v))?;
+                    } else {
+                        writer.write_fmt(format_args!(",{}", v))?;
+                    }
+                } else {
+                    writer.write_all(",".as_bytes())?;
+                }
+            }
+            writer.write_all("\n".as_bytes())?;
+        }
+        writer.flush()?;
+        Ok(())
     }
 }

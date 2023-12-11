@@ -1,12 +1,14 @@
 use crate::{app::Window, values::Values};
 use egui::{vec2, Context, Id, Layout, ScrollArea, Ui};
 use egui_extras::{Column, TableBuilder};
+use egui_file::FileDialog;
 use std::hash::Hash;
 
 pub struct TableWindow {
     id: Id,
     title: String,
     keys: Vec<String>,
+    save_dialog: Option<FileDialog>,
 }
 
 impl Window for TableWindow {
@@ -26,6 +28,7 @@ impl TableWindow {
             id: Id::new(id),
             title: key.clone(),
             keys: vec![key],
+            save_dialog: None,
         }
     }
 
@@ -46,6 +49,14 @@ impl TableWindow {
                     }
                 });
             });
+        #[cfg(not(target_arch = "wasm32"))]
+        if ui.button("Save CSV").clicked() {
+            let mut fd = FileDialog::save_file(None)
+                .default_filename(format!("{}.csv", self.title))
+                .title("Save as CSV");
+            fd.open();
+            self.save_dialog = Some(fd);
+        }
         ui.separator();
         let table = TableBuilder::new(ui)
             .cell_layout(Layout::left_to_right(egui::Align::Center))
@@ -87,5 +98,13 @@ impl TableWindow {
                     }
                 });
             });
+        if let Some(save_dialog) = self.save_dialog.as_mut() {
+            if save_dialog.show(ui.ctx()).selected() {
+                if let Some(path) = save_dialog.path() {
+                    let _ = values.save_csv(path, self.keys.iter());
+                }
+                self.save_dialog = None;
+            }
+        }
     }
 }

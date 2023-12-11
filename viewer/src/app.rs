@@ -3,7 +3,8 @@ use crate::{
     table::TableWindow,
     values::Values,
 };
-use egui::{ahash::HashMap, OpenUrl};
+use egui::ahash::HashMap;
+use egui_file::FileDialog;
 use ewebsock::{WsMessage, WsReceiver, WsSender};
 
 pub trait Window {
@@ -16,6 +17,7 @@ pub struct App {
     ws: Option<(WsSender, WsReceiver)>,
     values: Values,
     windows: Vec<(Box<dyn Window>, bool)>,
+    save_dialog: Option<FileDialog>,
 }
 
 impl App {
@@ -33,6 +35,7 @@ impl App {
             ws: None,
             values: Default::default(),
             windows: vec![],
+            save_dialog: None,
         }
     }
 }
@@ -73,17 +76,15 @@ impl eframe::App for App {
                 egui::widgets::global_dark_light_mode_switch(ui);
                 ui.separator();
                 ui.menu_button("File", |ui| {
-                    if ui.button("Download JSON").clicked() {
-                        //let uri = self.server;
-                        if let Ok(mut url) = url::Url::parse(&self.server) {
-                            if url.set_scheme("http").is_ok() {
-                                url.set_path("/download.json");
-                                ctx.open_url(OpenUrl::new_tab(url.to_string()));
-                            }
-                        }
-                    }
                     #[cfg(not(target_arch = "wasm32"))]
                     {
+                        if ui.button("Save as CSV").clicked() {
+                            let mut fd = FileDialog::save_file(None)
+                                .default_filename("all.csv")
+                                .title("Save as CSV");
+                            fd.open();
+                            self.save_dialog = Some(fd);
+                        }
                         if ui.button("Quit").clicked() {
                             _frame.close();
                         }
@@ -141,6 +142,15 @@ impl eframe::App for App {
             graph.0.show(ctx, &mut graph.1, &self.values);
         }
         self.windows.retain(|g| g.1);
+
+        if let Some(save_dialog) = self.save_dialog.as_mut() {
+            if save_dialog.show(ctx).selected() {
+                if let Some(path) = save_dialog.path() {
+                    let _ = self.values.save_csv(path, self.values.keys());
+                }
+                self.save_dialog = None;
+            }
+        }
     }
 }
 
