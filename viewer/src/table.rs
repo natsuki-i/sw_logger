@@ -59,27 +59,33 @@ impl TableWindow {
                     });
                 }
             })
-            .body(|mut body| {
+            .body(|body| {
                 let mut values: Vec<_> = self
                     .keys
                     .iter()
-                    .map(|key| values.iter_for_key(key))
+                    .map(|key| values.values_for_key(key))
                     .collect();
-                while values.iter().any(Option::is_some) {
-                    body.row(20.0, |mut row| {
-                        for iter in values.iter_mut() {
-                            row.col(|ui| {
-                                if let Some(it) = iter.as_mut() {
-                                    if let Some(v) = it.next() {
+                let max_len = values
+                    .iter()
+                    .map(|v| v.as_ref().map(|v| v.len()).unwrap_or_default())
+                    .max()
+                    .unwrap_or_default();
+                body.rows(20.0, max_len, |index, mut row| {
+                    for iter in values.iter_mut() {
+                        row.col(|ui| {
+                            if let Some(it) = iter.as_mut() {
+                                let offset = max_len - it.len();
+                                if offset <= index {
+                                    if let Some(v) = it.get(index - offset) {
                                         ui.label(v.to_string());
                                     } else {
                                         *iter = None;
                                     }
                                 }
-                            });
-                        }
-                    });
-                }
+                            }
+                        });
+                    }
+                });
             });
     }
 }

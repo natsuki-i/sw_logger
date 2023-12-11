@@ -157,41 +157,38 @@ impl App {
 
         table
             .header(20.0, |mut header| {
+                header.col(|_| {});
                 header.col(|ui| {
                     ui.strong("Key");
                 });
                 header.col(|ui| {
                     ui.strong("Last Value");
                 });
-                header.col(|_ui| {});
             })
-            .body(|mut body| {
-                for k in keys {
-                    body.row(20.0, |mut row| {
-                        row.col(|ui| {
-                            ui.label(k);
-                        });
-                        row.col(|ui| {
-                            if let Some(v) = self.values.get_last_value_for_key(k) {
-                                ui.label(v.to_string());
-                            }
-                        });
-                        row.col(|ui| {
-                            if ui.button("open graph").clicked() {
-                                self.windows
-                                    .push((Box::new(LineGraph::new(self.id, k.to_owned())), true));
-                                self.id += 1;
-                            }
-                            if ui.button("open table").clicked() {
-                                self.windows.push((
-                                    Box::new(TableWindow::new(self.id, k.to_owned())),
-                                    true,
-                                ));
-                                self.id += 1;
-                            }
-                        });
+            .body(|body| {
+                body.rows(20.0, keys.len(), |index, mut row| {
+                    let key = keys[index];
+                    row.col(|ui| {
+                        if ui.button("G").clicked() {
+                            self.windows
+                                .push((Box::new(LineGraph::new(self.id, key.to_owned())), true));
+                            self.id += 1;
+                        }
+                        if ui.button("T").clicked() {
+                            self.windows
+                                .push((Box::new(TableWindow::new(self.id, key.to_owned())), true));
+                            self.id += 1;
+                        }
                     });
-                }
+                    row.col(|ui| {
+                        ui.label(key);
+                    });
+                    row.col(|ui| {
+                        if let Some(v) = self.values.get_last_value_for_key(key) {
+                            ui.label(v.to_string());
+                        }
+                    });
+                });
             });
     }
 }

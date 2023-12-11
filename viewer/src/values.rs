@@ -62,6 +62,10 @@ impl Values {
         self.values.get(key).map(|v| v.iter())
     }
 
+    pub fn values_for_key(&self, key: &str) -> Option<&VecDeque<f32>> {
+        self.values.get(key)
+    }
+
     pub fn get_last_value_for_key(&self, key: &str) -> Option<f32> {
         self.values
             .get(key)
