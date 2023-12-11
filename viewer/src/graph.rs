@@ -1,12 +1,16 @@
 use crate::{app::Window, values::Values};
 use egui::{vec2, Context, Id, ScrollArea, Ui};
-use egui_plot::{Legend, Line, Plot, PlotPoints};
+use egui_plot::{Corner, HPlacement, Legend, Line, Plot, PlotPoints, VPlacement};
 use std::hash::Hash;
 
 pub struct LineGraph {
     id: Id,
     title: String,
     keys: Vec<String>,
+    legend_position: Corner,
+    x_axis_position: VPlacement,
+    y_axis_position: HPlacement,
+    period: usize,
 }
 
 impl Window for LineGraph {
@@ -27,6 +31,10 @@ impl LineGraph {
             id,
             title: key.clone(),
             keys: vec![key],
+            legend_position: Corner::LeftTop,
+            x_axis_position: VPlacement::Bottom,
+            y_axis_position: HPlacement::Right,
+            period: 3600,
         }
     }
 
@@ -49,13 +57,17 @@ impl LineGraph {
             });
         ui.separator();
         Plot::new(self.id.with("plot"))
-            .legend(Legend::default())
+            .legend(Legend::default().position(self.legend_position))
+            .x_axis_position(self.x_axis_position)
+            .y_axis_position(self.y_axis_position)
             .y_axis_width(5)
             .show_axes(true)
             .show_grid(true)
             .show(ui, |ui| {
                 for k in &self.keys {
                     if let Some(iter) = values.iter_for_key(k) {
+                        let skip = iter.len().saturating_sub(self.period);
+                        let iter = iter.skip(skip);
                         let len = iter.len();
                         let line = Line::new(PlotPoints::from_iter(
                             iter.enumerate()
@@ -65,6 +77,16 @@ impl LineGraph {
                         ui.line(line);
                     }
                 }
+            })
+            .response
+            .context_menu(|ui| {
+                graph_context_menu(
+                    ui,
+                    &mut self.legend_position,
+                    &mut self.x_axis_position,
+                    &mut self.y_axis_position,
+                    &mut self.period,
+                )
             });
     }
 }
@@ -73,6 +95,10 @@ pub struct XYGraph {
     id: Id,
     selector: (String, String),
     keys: Vec<(String, String)>,
+    legend_position: Corner,
+    x_axis_position: VPlacement,
+    y_axis_position: HPlacement,
+    period: usize,
 }
 
 impl Window for XYGraph {
@@ -93,6 +119,10 @@ impl XYGraph {
             id,
             selector: Default::default(),
             keys: vec![],
+            legend_position: Corner::LeftTop,
+            x_axis_position: VPlacement::Bottom,
+            y_axis_position: HPlacement::Left,
+            period: 3600,
         }
     }
 
@@ -125,7 +155,7 @@ impl XYGraph {
             for (index, keys) in self.keys.iter().enumerate() {
                 ui.horizontal(|ui| {
                     ui.label(format!("{:5} {:5}", keys.0, keys.1));
-                    if ui.button("Delete").clicked() {
+                    if ui.button("Remove").clicked() {
                         delete = Some(index);
                     }
                 });
@@ -136,8 +166,10 @@ impl XYGraph {
         }
         ui.separator();
         Plot::new(self.id.with("plot"))
+            .legend(Legend::default().position(self.legend_position))
+            .x_axis_position(self.x_axis_position)
+            .y_axis_position(self.y_axis_position)
             .y_axis_width(5)
-            .legend(Legend::default())
             .show_axes(true)
             .show_grid(true)
             .data_aspect(1.0)
@@ -151,6 +183,7 @@ impl XYGraph {
                                 x_iter
                                     .rev()
                                     .zip(y_iter.rev())
+                                    .take(self.period)
                                     .rev()
                                     .map(|(x, y)| [*x as f64, *y as f64]),
                             ))
@@ -158,6 +191,73 @@ impl XYGraph {
                         );
                     }
                 }
+            })
+            .response
+            .context_menu(|ui| {
+                graph_context_menu(
+                    ui,
+                    &mut self.legend_position,
+                    &mut self.x_axis_position,
+                    &mut self.y_axis_position,
+                    &mut self.period,
+                )
             });
     }
+}
+
+fn graph_context_menu(
+    ui: &mut Ui,
+    legend_position: &mut Corner,
+    x_axis_position: &mut VPlacement,
+    y_axis_position: &mut HPlacement,
+    period: &mut usize,
+) {
+    ui.menu_button("Legend", |ui| {
+        let mut clicked = false;
+        for (label, corner) in [
+            ("Left Top", Corner::LeftTop),
+            ("Left Bottom", Corner::LeftBottom),
+            ("Right Top", Corner::RightTop),
+            ("Right Bottom", Corner::RightBottom),
+        ] {
+            clicked |= ui.radio_value(legend_position, corner, label).clicked();
+        }
+        if clicked {
+            ui.close_menu();
+        }
+    });
+    ui.menu_button("X Axis", |ui| {
+        let mut clicked = false;
+        for (label, position) in [("Top", VPlacement::Top), ("Bottom", VPlacement::Bottom)] {
+            clicked |= ui.radio_value(x_axis_position, position, label).clicked();
+        }
+        if clicked {
+            ui.close_menu();
+        }
+    });
+    ui.menu_button("Y Axis", |ui| {
+        let mut clicked = false;
+        for (label, position) in [("Left", HPlacement::Left), ("Right", HPlacement::Right)] {
+            clicked |= ui.radio_value(y_axis_position, position, label).clicked();
+        }
+        if clicked {
+            ui.close_menu();
+        }
+    });
+    ui.menu_button("Period", |ui| {
+        let mut clicked = false;
+        for (label, p) in [
+            ("10sec", 60 * 10),
+            ("1min", 60 * 60),
+            ("5min", 60 * 60 * 5),
+            ("10min", 60 * 60 * 10),
+            ("15min", 60 * 60 * 15),
+            ("30min", 60 * 60 * 30),
+        ] {
+            clicked |= ui.radio_value(period, p, label).clicked();
+        }
+        if clicked {
+            ui.close_menu();
+        }
+    });
 }
