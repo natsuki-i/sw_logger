@@ -9,10 +9,10 @@ eframe = { version = "0.23.0", default-features = false, features = [
     "glow",
     "persistence",
 ] }
-egui = "0.23.0"
+egui = { version = "0.23.0", features = ["persistence", "serde"] }
 egui_extras = "0.23.0"
 egui_file = "0.11"
-egui_plot = "0.23.0"
+egui_plot = { version = "0.23.0", features = ["serde"] }
 ewebsock = "0.4"
 log = "0.4"
 serde = { version = "1", features = ["derive"] }

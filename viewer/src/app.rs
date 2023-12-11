@@ -3,28 +3,50 @@ use crate::{
     table::TableWindow,
     values::Values,
 };
-use egui::ahash::HashMap;
+use egui::{ahash::HashMap, Context};
 use egui_file::FileDialog;
 use ewebsock::{WsMessage, WsReceiver, WsSender};
+use serde::{Deserialize, Serialize};
 
-pub trait Window {
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, values: &Values);
+#[derive(Serialize, Deserialize)]
+pub enum Window {
+    LineGraph(Box<LineGraph>),
+    XYGraph(Box<XYGraph>),
+    Table(Box<TableWindow>),
 }
 
+impl Window {
+    fn show(&mut self, ctx: &Context, open: &mut bool, values: &Values) {
+        match self {
+            Window::LineGraph(w) => w.show(ctx, open, values),
+            Window::XYGraph(w) => w.show(ctx, open, values),
+            Window::Table(w) => w.show(ctx, open, values),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct App {
     id: usize,
     server: String,
+    #[serde(skip, default)]
     ws: Option<(WsSender, WsReceiver)>,
     values: Values,
-    windows: Vec<(Box<dyn Window>, bool)>,
+    windows: Vec<(Window, bool)>,
+    #[serde(skip, default)]
     save_dialog: Option<FileDialog>,
 }
 
 impl App {
-    pub fn new(_cc: &eframe::CreationContext) -> Self {
+    pub fn new(cc: &eframe::CreationContext) -> Self {
+        if let Some(storage) = cc.storage {
+            if let Some(app) = eframe::get_value(storage, eframe::APP_KEY) {
+                return app;
+            }
+        }
         #[cfg(target_arch = "wasm32")]
         let server = {
-            let location = &_cc.integration_info.web_info.location;
+            let location = &cc.integration_info.web_info.location;
             format!("ws://{}/socket", location.host)
         };
         #[cfg(not(target_arch = "wasm32"))]
@@ -41,7 +63,11 @@ impl App {
 }
 
 impl eframe::App for App {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        eframe::set_value(storage, eframe::APP_KEY, &self);
+    }
+
+    fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
         if let Some((_, rx)) = self.ws.as_ref() {
             while let Some(e) = rx.try_recv() {
                 match e {
@@ -111,7 +137,7 @@ impl eframe::App for App {
                 ui.separator();
                 if ui.button("XY Graph").clicked() {
                     self.windows.push((
-                        Box::new(XYGraph::new(format!("xy_graph_{}", self.id))),
+                        Window::XYGraph(Box::new(XYGraph::new(format!("xy_graph_{}", self.id)))),
                         true,
                     ));
                     self.id += 1;
@@ -180,13 +206,20 @@ impl App {
                     let key = keys[index];
                     row.col(|ui| {
                         if ui.button("G").clicked() {
-                            self.windows
-                                .push((Box::new(LineGraph::new(self.id, key.to_owned())), true));
+                            self.windows.push((
+                                Window::LineGraph(Box::new(LineGraph::new(
+                                    self.id,
+                                    key.to_owned(),
+                                ))),
+                                true,
+                            ));
                             self.id += 1;
                         }
                         if ui.button("T").clicked() {
-                            self.windows
-                                .push((Box::new(TableWindow::new(self.id, key.to_owned())), true));
+                            self.windows.push((
+                                Window::Table(Box::new(TableWindow::new(self.id, key.to_owned()))),
+                                true,
+                            ));
                             self.id += 1;
                         }
                     });

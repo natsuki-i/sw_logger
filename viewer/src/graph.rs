@@ -1,8 +1,59 @@
-use crate::{app::Window, values::Values};
+use crate::values::Values;
 use egui::{vec2, Context, Id, ScrollArea, Ui};
-use egui_plot::{Corner, HPlacement, Legend, Line, Plot, PlotPoints, VPlacement};
+use egui_plot::{Legend, Line, Plot, PlotPoints};
+use serde::{Deserialize, Serialize};
 use std::hash::Hash;
 
+#[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
+enum Corner {
+    LeftTop,
+    RightTop,
+    LeftBottom,
+    RightBottom,
+}
+
+impl From<Corner> for egui_plot::Corner {
+    fn from(c: Corner) -> Self {
+        match c {
+            Corner::LeftTop => egui_plot::Corner::LeftTop,
+            Corner::RightTop => egui_plot::Corner::RightTop,
+            Corner::LeftBottom => egui_plot::Corner::LeftBottom,
+            Corner::RightBottom => egui_plot::Corner::RightBottom,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
+enum VPlacement {
+    Top,
+    Bottom,
+}
+
+impl From<VPlacement> for egui_plot::VPlacement {
+    fn from(p: VPlacement) -> Self {
+        match p {
+            VPlacement::Top => egui_plot::VPlacement::Top,
+            VPlacement::Bottom => egui_plot::VPlacement::Bottom,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
+enum HPlacement {
+    Left,
+    Right,
+}
+
+impl From<HPlacement> for egui_plot::HPlacement {
+    fn from(p: HPlacement) -> Self {
+        match p {
+            HPlacement::Left => egui_plot::HPlacement::Left,
+            HPlacement::Right => egui_plot::HPlacement::Right,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct LineGraph {
     id: Id,
     title: String,
@@ -11,17 +62,6 @@ pub struct LineGraph {
     x_axis_position: VPlacement,
     y_axis_position: HPlacement,
     period: usize,
-}
-
-impl Window for LineGraph {
-    fn show(&mut self, ctx: &Context, open: &mut bool, values: &Values) {
-        egui::Window::new(&self.title)
-            .id(self.id)
-            .default_size(vec2(400.0, 600.0))
-            .vscroll(false)
-            .open(open)
-            .show(ctx, |ui| self.ui(ui, values));
-    }
 }
 
 impl LineGraph {
@@ -36,6 +76,15 @@ impl LineGraph {
             y_axis_position: HPlacement::Right,
             period: 3600,
         }
+    }
+
+    pub fn show(&mut self, ctx: &Context, open: &mut bool, values: &Values) {
+        egui::Window::new(&self.title)
+            .id(self.id)
+            .default_size(vec2(400.0, 600.0))
+            .vscroll(false)
+            .open(open)
+            .show(ctx, |ui| self.ui(ui, values));
     }
 
     pub fn ui(&mut self, ui: &mut Ui, values: &Values) {
@@ -57,9 +106,9 @@ impl LineGraph {
             });
         ui.separator();
         Plot::new(self.id.with("plot"))
-            .legend(Legend::default().position(self.legend_position))
-            .x_axis_position(self.x_axis_position)
-            .y_axis_position(self.y_axis_position)
+            .legend(Legend::default().position(self.legend_position.into()))
+            .x_axis_position(self.x_axis_position.into())
+            .y_axis_position(self.y_axis_position.into())
             .y_axis_width(5)
             .show_axes(true)
             .show_grid(true)
@@ -91,6 +140,7 @@ impl LineGraph {
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct XYGraph {
     id: Id,
     selector: (String, String),
@@ -99,17 +149,6 @@ pub struct XYGraph {
     x_axis_position: VPlacement,
     y_axis_position: HPlacement,
     period: usize,
-}
-
-impl Window for XYGraph {
-    fn show(&mut self, ctx: &Context, open: &mut bool, values: &Values) {
-        egui::Window::new("XY Graph")
-            .id(self.id)
-            .default_size(vec2(400.0, 600.0))
-            .vscroll(false)
-            .open(open)
-            .show(ctx, |ui| self.ui(ui, values));
-    }
 }
 
 impl XYGraph {
@@ -124,6 +163,15 @@ impl XYGraph {
             y_axis_position: HPlacement::Left,
             period: 3600,
         }
+    }
+
+    pub fn show(&mut self, ctx: &Context, open: &mut bool, values: &Values) {
+        egui::Window::new("XY Graph")
+            .id(self.id)
+            .default_size(vec2(400.0, 600.0))
+            .vscroll(false)
+            .open(open)
+            .show(ctx, |ui| self.ui(ui, values));
     }
 
     pub fn ui(&mut self, ui: &mut Ui, values: &Values) {
@@ -166,9 +214,9 @@ impl XYGraph {
         }
         ui.separator();
         Plot::new(self.id.with("plot"))
-            .legend(Legend::default().position(self.legend_position))
-            .x_axis_position(self.x_axis_position)
-            .y_axis_position(self.y_axis_position)
+            .legend(Legend::default().position(self.legend_position.into()))
+            .x_axis_position(self.x_axis_position.into())
+            .y_axis_position(self.y_axis_position.into())
             .y_axis_width(5)
             .show_axes(true)
             .show_grid(true)

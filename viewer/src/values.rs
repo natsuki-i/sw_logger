@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, VecDeque},
     fs::File,
@@ -5,10 +6,32 @@ use std::{
     path::Path,
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Deserialize)]
 pub struct Values {
     values: BTreeMap<String, VecDeque<f32>>,
     max_len: usize,
+}
+
+impl Serialize for Values {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        #[derive(Serialize)]
+        struct V {
+            values: BTreeMap<String, Vec<f32>>,
+            max_len: usize,
+        }
+        V {
+            values: self
+                .values
+                .iter()
+                .map(|(k, _)| (k.clone(), vec![]))
+                .collect(),
+            max_len: self.max_len,
+        }
+        .serialize(serializer)
+    }
 }
 
 impl Default for Values {

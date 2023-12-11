@@ -1,25 +1,17 @@
-use crate::{app::Window, values::Values};
+use crate::values::Values;
 use egui::{vec2, Context, Id, Layout, ScrollArea, Ui};
 use egui_extras::{Column, TableBuilder};
 use egui_file::FileDialog;
+use serde::{Deserialize, Serialize};
 use std::hash::Hash;
 
+#[derive(Serialize, Deserialize)]
 pub struct TableWindow {
     id: Id,
     title: String,
     keys: Vec<String>,
+    #[serde(skip, default)]
     save_dialog: Option<FileDialog>,
-}
-
-impl Window for TableWindow {
-    fn show(&mut self, ctx: &Context, open: &mut bool, values: &Values) {
-        egui::Window::new(&self.title)
-            .id(self.id)
-            .default_size(vec2(100.0, 200.0))
-            .vscroll(true)
-            .open(open)
-            .show(ctx, |ui| self.ui(ui, values));
-    }
 }
 
 impl TableWindow {
@@ -32,6 +24,14 @@ impl TableWindow {
         }
     }
 
+    pub fn show(&mut self, ctx: &Context, open: &mut bool, values: &Values) {
+        egui::Window::new(&self.title)
+            .id(self.id)
+            .default_size(vec2(100.0, 200.0))
+            .vscroll(true)
+            .open(open)
+            .show(ctx, |ui| self.ui(ui, values));
+    }
     pub fn ui(&mut self, ui: &mut Ui, values: &Values) {
         ScrollArea::horizontal()
             .id_source(self.id.with("header"))
